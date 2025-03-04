@@ -1,12 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import Matter from "matter-js";
 
+import image1 from "./assets/images/monsan.jpg";
+import image2 from "./assets/images/torii.jpg";
+import image3 from "./assets/images/rome.jpg";
+import image4 from "./assets/images/moai.jpg";
+import image5 from "./assets/images/familia.jpg";
+
+const imagePaths = [image1, image2, image3, image4, image5];
 
 const MatterSimulation = () => {
     const sceneRef = useRef(null);
     const [uploadedImage, setUploadedImage] = useState(null);
     const [similarImages, setSimilarImages] = useState([]);
     const [absorbedImages, setAbsorbedImages] = useState([]);
+    // const [isReversed, setIsReversed] = useState(false);
     const isReversedRef = useRef(false);
 
     const toggleReversed = () => {
@@ -14,6 +22,15 @@ const MatterSimulation = () => {
     };
 
     const [modalImage, setModalImage] = useState(null);
+
+    // const handleImageUpload = (event) => {
+    //     const file = event.target.files[0];
+    //     if (file) {
+    //         const reader = new FileReader();
+    //         reader.onload = () => setUploadedImage(reader.result);
+    //         reader.readAsDataURL(file);
+    //     }
+    // };
 
     // 画像アップロード処理
     const handleUpload = async (event) => {
@@ -35,17 +52,16 @@ const MatterSimulation = () => {
 
     // 画像保存処理
     const handleSave = async () => {
+        if (!uploadedImage) return;
+
         const response = await fetch("http://localhost:5000/save_image", {
             method: "POST",
-            headers: { "Content-Type": "application/json" }
+            body: JSON.stringify({ image_url: uploadedImage }),
+            headers: { "Content-Type": "application/json" },
         });
-    
+
         const data = await response.json();
-        if (data.error) {
-            alert(`保存エラー: ${data.error}`);
-        } else {
-            alert(`画像保存成功！\nサムネイルURL: ${data.thumbnail_url}`);
-        }
+        console.log("保存結果:", data);
     };
 
 
@@ -88,6 +104,8 @@ const MatterSimulation = () => {
         };
 
         let objects = [];
+        const attractors = [];
+        const repellers = [];
 
         (async () => {
             const playerSize = await loadImageSize(uploadedImage);
@@ -123,6 +141,33 @@ const MatterSimulation = () => {
                 });
             });
 
+
+            // const sizes = await Promise.all(imagePaths.map(loadImageSize));
+
+            // imagePaths.forEach((image, i) => {
+            //     for (let j = 0; j < 20; j++) {
+            //         const isAttractor = (i + j) % 2 === 0;
+            //         const size = sizes[i];
+
+            //         const imgObj = Matter.Bodies.circle(100 + i * 120, 20 + j * 50, 20, {
+            //             restitution: 0.1,
+            //             frictionAir: 0.1,
+            //             density:0.0001,
+            //             render: {
+            //                 sprite: {
+            //                     texture: image,
+            //                     xScale: 40 / size.width,
+            //                     yScale: 40 / size.height,
+            //                 },
+            //             },
+            //             label: image,
+            //         });
+
+            //         objects.push(imgObj);
+            //         isAttractor ? attractors.push(imgObj) : repellers.push(imgObj);
+            //     }
+            // });
+
             Matter.World.add(world, objects);
 
             // マウスでオブジェクトを掴めるようにする
@@ -137,6 +182,16 @@ const MatterSimulation = () => {
 
             Matter.World.add(world, mouseConstraint);
             render.mouse = mouse;
+
+            // Matter.Events.on(engine, "beforeUpdate", () => {
+            //     attractors.forEach(obj => applyForce(obj, player, isReversed));
+            //     repellers.forEach(obj => applyForce(obj, player, !isReversed));
+            // });
+
+            // Matter.Events.on(engine, "beforeUpdate", () => {
+            //     attractors.forEach(obj => applyForce(obj, player, isReversedRef.current));
+            //     repellers.forEach(obj => applyForce(obj, player, !isReversedRef.current));
+            // });
 
             Matter.Events.on(engine, "beforeUpdate", () => {
                 objects.forEach((obj, index) => {
@@ -232,6 +287,7 @@ const MatterSimulation = () => {
             ) : (
                 <>
                     <button 
+                        //onClick={() => setIsReversed(!isReversed)}
                         onClick={toggleReversed}
                         style={{ 
                           position: "absolute", 

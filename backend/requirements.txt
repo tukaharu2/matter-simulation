@@ -1,0 +1,11 @@
+flask
+flask-cors
+flask-session
+boto3
+pillow
+psycopg2-binary
+numpy
+torch
+transformers
+scikit-learn
+python-dotenv
